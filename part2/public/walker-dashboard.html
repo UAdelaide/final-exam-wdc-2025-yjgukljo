@@ -9,7 +9,10 @@
 </head>
 <body class="bg-light">
   <div id="app" class="container py-4">
-    <h1 class="mb-4 text-success">Walker Dashboard</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="text-success">Walker Dashboard</h1>
+      <button class="btn btn-outline-danger" @click="logout">Logout</button>
+    </div>
 
     <!-- Alert messages -->
     <div v-if="message" class="alert alert-info">{{ message }}</div>
@@ -43,7 +46,17 @@
         const walks = ref([]);
         const message = ref('');
         const error = ref('');
-        const user = 3;
+        const currentUser = ref(null);
+
+        async function getCurrentUser() {
+          try {
+            const res = await fetch('/api/users/me');
+            if (!res.ok) throw new Error('Failed to get user info');
+            currentUser.value = await res.json();
+          } catch (err) {
+            error.value = 'Failed to get user information';
+          }
+        }
 
         async function loadWalkRequests() {
           try {
@@ -57,10 +70,14 @@
 
         async function applyToWalk(requestId) {
           try {
+            if (!currentUser.value) {
+              throw new Error('User not loaded');
+            }
+            
             const res = await fetch(`/api/walks/${requestId}/apply`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ walker_id: user })
+              body: JSON.stringify({ walker_id: currentUser.value.id })
             });
             const result = await res.json();
 
@@ -74,7 +91,17 @@
           }
         }
 
+        async function logout() {
+          try {
+            await fetch('/logout', { method: 'POST' });
+            window.location.href = '/';
+          } catch (err) {
+            error.value = 'Logout failed';
+          }
+        }
+
         onMounted(() => {
+          getCurrentUser();
           loadWalkRequests();
         });
 
@@ -82,7 +109,9 @@
           walks,
           message,
           error,
-          applyToWalk
+          currentUser,
+          applyToWalk,
+          logout
         };
       }
     }).mount('#app');

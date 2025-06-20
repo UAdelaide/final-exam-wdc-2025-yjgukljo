@@ -10,11 +10,98 @@
 <body class="bg-light">
 
   <div id="app" class="container py-5">
-    <h1 class="mb-4 text-primary">{{ message }}</h1>
-    <p class="lead">Connect with trusted walkers for your beloved dog!</p>
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <h1 class="mb-4 text-primary text-center">{{ message }}</h1>
+        <p class="lead text-center">Connect with trusted student walkers for your beloved dog!</p>
+        
+        <!-- Login Form -->
+        <div class="card">
+          <div class="card-body">
+            <form @submit.prevent="login">
+              <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="username" 
+                  v-model="loginData.username"
+                  placeholder="ownerJane"
+                  required>
+              </div>
+              
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                  <input 
+                    :type="showPassword ? 'text' : 'password'" 
+                    class="form-control" 
+                    id="password" 
+                    v-model="loginData.password"
+                    required>
+                  <button 
+                    class="btn btn-outline-secondary" 
+                    type="button" 
+                    @click="showPassword = !showPassword">
+                    🔑
+                  </button>
+                </div>
+              </div>
+              
+              <div v-if="errorMessage" class="alert alert-danger">
+                {{ errorMessage }}
+              </div>
+              
+              <button type="submit" class="btn btn-primary w-100" :disabled="loading">
+                {{ loading ? 'Logging in...' : 'Log In' }}
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Demo user info -->
+        <div class="mt-3 text-muted small text-center">
+          Demo users: alice123, bobwalker, carol123<br>
+          Passwords: hashed123, hashed456, hashed789
+        </div>
+      </div>
+    </div>
 
-    <a href="owner-dashboard.html" class="btn btn-outline-primary me-2">Owner Dashboard</a>
-    <a href="walker-dashboard.html" class="btn btn-outline-success">Walker Dashboard</a>
+    <!-- Dogs Table Section -->
+    <div class="mt-5" v-if="showDogsTable">
+      <h2 class="text-center mb-4">All Dogs in Our Service</h2>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Dog Name</th>
+              <th>Size</th>
+              <th>Owner</th>
+              <th>Photo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="dog in dogs" :key="dog.dog_name">
+              <td>{{ dog.dog_name }}</td>
+              <td>{{ dog.size }}</td>
+              <td>{{ dog.owner_username }}</td>
+              <td>
+                <img v-if="dog.photo" :src="dog.photo" :alt="dog.dog_name + ' photo'"
+                     class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                <div v-else class="spinner-border spinner-border-sm" role="status"></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Toggle Dogs Table Button -->
+    <div class="text-center mt-3">
+      <button @click="toggleDogsTable" class="btn btn-info">
+        {{ showDogsTable ? 'Hide Dogs' : 'View All Dogs' }}
+      </button>
+    </div>
   </div>
 
   <script>
@@ -22,8 +109,73 @@
     createApp({
       data() {
         return {
-          message: 'Welcome to the Dog Walking Service!'
+          message: 'Welcome to the Dog Walking Service!',
+          loginData: {
+            username: '',
+            password: ''
+          },
+          showPassword: false,
+          loading: false,
+          errorMessage: '',
+          dogs: [],
+          showDogsTable: false
         };
+      },
+      methods: {
+        async login() {
+          this.loading = true;
+          this.errorMessage = '';
+          
+          try {
+            const response = await fetch('/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(this.loginData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              // Redirect based on user role
+              window.location.href = data.redirect;
+            } else {
+              this.errorMessage = data.error || 'Login failed';
+            }
+            
+          } catch (error) {
+            console.error('Login error:', error);
+            this.errorMessage = 'Login failed. Please try again.';
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async loadDogs() {
+          try {
+            const response = await fetch('/api/dogs');
+            const dogsData = await response.json();
+            
+            // Add random photos for each dog
+            for (let dog of dogsData) {
+              const photoResponse = await fetch('https://dog.ceo/api/breeds/image/random');
+              const photoData = await photoResponse.json();
+              dog.photo = photoData.message;
+            }
+            
+            this.dogs = dogsData;
+          } catch (error) {
+            console.error('Error loading dogs:', error);
+          }
+        },
+
+        async toggleDogsTable() {
+          this.showDogsTable = !this.showDogsTable;
+          if (this.showDogsTable && this.dogs.length === 0) {
+            await this.loadDogs();
+          }
+        }
       }
     }).mount('#app');
   </script>
