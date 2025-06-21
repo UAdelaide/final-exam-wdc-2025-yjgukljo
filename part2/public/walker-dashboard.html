@@ -1,16 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
   <meta charset="UTF-8" />
   <title>Walker Dashboard - Dog Walking Service</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    h1 {
+      color: #28a745;
+      margin: 0;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 14px;
+    }
+    .btn-outline-success {
+      background-color: transparent;
+      color: #28a745;
+      border: 1px solid #28a745;
+    }
+    .btn-outline-success:hover {
+      background-color: #28a745;
+      color: white;
+    }
+    .btn-outline-danger {
+      background-color: transparent;
+      color: #dc3545;
+      border: 1px solid #dc3545;
+    }
+    .btn-outline-danger:hover {
+      background-color: #dc3545;
+      color: white;
+    }
+    .alert {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    .alert-info {
+      background-color: #d1ecf1;
+      border-color: #bee5eb;
+      color: #0c5460;
+    }
+    .alert-danger {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: -10px;
+    }
+    .col-md-6 {
+      flex: 0 0 50%;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      height: 100%;
+    }
+    .card-body {
+      padding: 20px;
+    }
+    @media (max-width: 768px) {
+      .col-md-6 {
+        flex: 0 0 100%;
+      }
+      .header {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+  </style>
 </head>
-<body class="bg-light">
-  <div id="app" class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1 class="text-success">Walker Dashboard</h1>
+<body>
+  <div id="app" class="container">
+    <div class="header">
+      <h1>Walker Dashboard</h1>
       <button class="btn btn-outline-danger" @click="logout">Logout</button>
     </div>
 
@@ -20,17 +111,17 @@
 
     <!-- Walk requests list -->
     <div v-if="walks.length > 0" class="row">
-      <div class="col-md-6 mb-4" v-for="walk in walks" :key="walk.request_id">
+      <div class="col-md-6" v-for="walk in walks" :key="walk.request_id || walk.id">
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Walk for {{ walk.dog_name }} ({{ walk.size }})</h5>
-            <p class="card-text">
-              <strong>Date:</strong> {{ new Date(walk.requested_time).toLocaleString() }}<br>
+            <h5>Walk for {{ walk.dog_name }} ({{ walk.size }})</h5>
+            <p>
+              <strong>Date:</strong> {{ new Date(walk.requested_time).toLocaleString('en-US') }}<br>
               <strong>Duration:</strong> {{ walk.duration_minutes }} minutes<br>
               <strong>Location:</strong> {{ walk.location }}<br>
               <strong>Owner:</strong> {{ walk.owner_name }}
             </p>
-            <button type=button class="btn btn-outline-success" @click="applyToWalk(walk.request_id)">Apply</button>
+            <button type=button class="btn btn-outline-success" @click="applyToWalk(walk.request_id || walk.id)">Apply</button>
           </div>
         </div>
       </div>
@@ -116,7 +207,5 @@
       }
     }).mount('#app');
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
